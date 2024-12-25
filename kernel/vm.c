@@ -449,3 +449,51 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
     return -1;
   }
 }
+
+// Recursively visit all children of the given page table
+void
+vmprintwalk(uint64 paths[2][3] ,pagetable_t root,int cnt){
+    if(cnt == 2){
+        printf(" ..%d: pte %p pa %p\n", (int)paths[0][0], (void*)paths[0][1], (void*)paths[0][2]);
+        printf(" .. ..%d: pte %p pa %p\n", (int)paths[1][0], (void*)paths[1][1], (void*)paths[1][2]);
+    }
+
+    for (int i = 0; i < 512; i++){
+        pte_t pte = root[i];
+
+        uint64 child = PTE2PA(pte);
+        if((pte & PTE_V) && (pte & (PTE_R|PTE_W|PTE_X)) == 0){
+
+            if(cnt < 2){
+                paths[cnt][0] = i;
+                paths[cnt][1] = pte;
+                paths[cnt][2] = child;
+            }else{
+                continue;
+            }
+            vmprintwalk(paths,(pagetable_t)child,cnt + 1);
+        } else if(pte & PTE_V){
+             printf(" .. .. ..%d: pte %p pa %p\n", i, (void*)pte, (void*)child);
+        }
+    }
+}
+
+// Visualize given pagetable to easily debug
+// Prints the contents of a page table
+#ifdef LAB_PGTBL
+void
+vmprint(pagetable_t pagetable) {
+  // your code here
+    uint64 paths[2][3];
+    printf("page table %p\n" , pagetable);
+    vmprintwalk(paths,pagetable,0);
+}
+#endif
+
+
+#ifdef LAB_PGTBL
+pte_t*
+pgpte(pagetable_t pagetable, uint64 va) {
+  return walk(pagetable, va, 0);
+}
+#endif

@@ -25,6 +25,10 @@ void            consputc(int);
 // exec.c
 int             exec(char*, char**);
 
+// Start
+void            vmprint(pagetable_t);
+// End
+
 // file.c
 struct file*    filealloc(void);
 void            fileclose(struct file*);
